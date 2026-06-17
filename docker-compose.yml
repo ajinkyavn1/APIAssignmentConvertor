@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  unitconversionapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: unitconversionapi:latest
+    container_name: unitconversionapi
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+    volumes:
+      - ./src/UnitConversion.Infrastructure/Data:/app/Data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/units"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+

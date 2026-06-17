@@ -1,0 +1,93 @@
+[
+  {
+    "Name": "meter",
+    "Category": "Length",
+    "FactorToBaseUnit": 1.0
+  },
+  {
+    "Name": "kilometer",
+    "Category": "Length",
+    "FactorToBaseUnit": 1000.0
+  },
+  {
+    "Name": "centimeter",
+    "Category": "Length",
+    "FactorToBaseUnit": 0.01
+  },
+  {
+    "Name": "millimeter",
+    "Category": "Length",
+    "FactorToBaseUnit": 0.001
+  },
+  {
+    "Name": "inch",
+    "Category": "Length",
+    "FactorToBaseUnit": 0.0254
+  },
+  {
+    "Name": "foot",
+    "Category": "Length",
+    "FactorToBaseUnit": 0.3048
+  },
+  {
+    "Name": "yard",
+    "Category": "Length",
+    "FactorToBaseUnit": 0.9144
+  },
+  {
+    "Name": "mile",
+    "Category": "Length",
+    "FactorToBaseUnit": 1609.34
+  },
+  {
+    "Name": "kilogram",
+    "Category": "Weight",
+    "FactorToBaseUnit": 1.0
+  },
+  {
+    "Name": "gram",
+    "Category": "Weight",
+    "FactorToBaseUnit": 0.001
+  },
+  {
+    "Name": "pound",
+    "Category": "Weight",
+    "FactorToBaseUnit": 0.453592
+  },
+  {
+    "Name": "ounce",
+    "Category": "Weight",
+    "FactorToBaseUnit": 0.0283495
+  },
+  {
+    "Name": "liter",
+    "Category": "Volume",
+    "FactorToBaseUnit": 1.0
+  },
+  {
+    "Name": "milliliter",
+    "Category": "Volume",
+    "FactorToBaseUnit": 0.001
+  },
+  {
+    "Name": "gallon",
+    "Category": "Volume",
+    "FactorToBaseUnit": 3.78541
+  },
+  {
+    "Name": "celsius",
+    "Category": "Temperature",
+    "FactorToBaseUnit": 1.0
+  },
+  {
+    "Name": "fahrenheit",
+    "Category": "Temperature",
+    "FactorToBaseUnit": 1.0
+  },
+  {
+    "Name": "kelvin",
+    "Category": "Temperature",
+    "FactorToBaseUnit": 1.0
+  }
+]
+
