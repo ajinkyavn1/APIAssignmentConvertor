@@ -1,231 +1,668 @@
 # Unit Conversion API
 
-A production-quality ASP.NET Core 8 Web API for converting values between different measurement units.
+A production-oriented ASP.NET Core 8 Web API for converting values between different units of measurement.
 
-## Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-# Unit Conversion API
-
-A small, reliable ASP.NET Core Web API for converting between measurement units.
-
-Targets: .NET 10.
-
-What this repo contains
-- Layered solution (API → Application → Infrastructure → Domain)
-- A JSON-based unit store (Data/units.json) with runtime unit registration
-- Validation (FluentValidation), global error handling, and unit tests
-- Docker support and a simple docker-compose to run the service
-
-Quick run (local)
-
-1. Build and test:
-
-```bash
-dotnet build UnitConversion.sln -c Release
-dotnet test UnitConversion.sln -c Release
-```
-
-2. Run the API:
-
-```bash
-dotnet run --project src/UnitConversion.Api/UnitConversion.Api.csproj
-```
-
-3. Try endpoints:
-
-```bash
-curl http://localhost:8080/api/units
-curl -X POST http://localhost:8080/api/conversions \
-  -H "Content-Type: application/json" \
-  -d '{"value":100,"fromUnit":"meter","toUnit":"foot"}'
-```
-
-Run with Docker
-
-```bash
-docker compose build
-docker compose up -d
-curl http://localhost:8080/api/units
-```
-
-Notes
-- The image uses .NET 10 runtime. Swagger is available for development only.
-- Production image runs on HTTP port 8080 and reads units from `/app/Data`.
-
-If you prefer a short development-only docker-compose (mounting code, enabling Swagger), I can add it.
-
-License: MIT
-
-  - Service exceptions
-
-- **Validators** (10+ test cases)
-  - Valid requests
-  - Negative values
-  - Empty/null inputs
-  - Invalid categories
-
-## OpenTelemetry
-
-### Configuration
-
-OpenTelemetry is configured in `OpenTelemetryExtensions.cs` with:
-
-- **Tracing**: ASP.NET Core and HTTP client instrumentation
-- **Metrics**: Request duration, rate, and size metrics
-- **Exporter**: Console exporter for development (can be replaced with OTLP, Jaeger, etc.)
-
-### Viewing Traces
-
-In development mode, traces are exported to the console. For production, configure an external collector:
-
-```csharp
-tracerProvider.AddOtlpExporter(opt =>
-{
-    opt.Endpoint = new Uri("http://otel-collector:4318");
-});
-```
-
-### Example Trace
-
-```
-Activity.TraceId:            4bf92f3577b34da6a3ce929d0e0e4736
-Activity.SpanId:             00f067aa0ba902b7
-Activity.Kind:               Server
-Activity.DisplayName:        POST /api/conversions
-Activity.Duration:           00:00:00.0523456
-Activity.Status:             Ok
-```
-
-## Design Decisions
-
-### 1. Base Unit Strategy
-
-**Why**: Simplifies conversion logic and prevents precision loss from intermediate conversions.
-
-**How**: Each unit stores a factor to convert to its category's base unit (e.g., meter for length). Conversions multiply by the source factor and divide by the target factor.
-
-**Example**:
-```
-100 feet to meters:
-  = (100 * 0.3048) / 1.0
-  = 30.48 meters
-```
-
-### 2. Dedicated Temperature Logic
-
-**Why**: Temperature conversions require formulas, not just multiplication/division.
-
-**How**: `ConversionService` detects temperature units and applies formulas:
-- Celsius → Fahrenheit: `(C * 9/5) + 32`
-- Fahrenheit → Celsius: `(F - 32) * 5/9`
-- Kelvin → Celsius: `K - 273.15`
-
-### 3. JSON-based Unit Storage
-
-**Why**: Simple, human-readable, no database dependency, versioning via git.
-
-**How**: `JsonUnitRepository` loads units from `Data/units.json`, caches in memory, and persists changes back to disk.
-
-**Tradeoff**: Single file, not distributed. For large deployments, replace with a database.
-
-### 4. FluentValidation
-
-**Why**: Declarative, reusable, testable validation rules.
-
-**How**: Each DTO has a corresponding validator class inheriting `AbstractValidator<T>`.
-
-**Example**:
-```csharp
-RuleFor(x => x.Value)
-    .GreaterThanOrEqualTo(0)
-    .WithMessage("Value must be non-negative");
-```
-
-### 5. Middleware-based Exception Handling
-
-**Why**: Centralized error handling, consistent JSON responses.
-
-**How**: `ExceptionMiddleware` catches all exceptions and returns a JSON error object.
-
-**Example**:
-```json
-{
-  "error": "Unit 'unknown' not found"
-}
-```
-
-### 6. OpenTelemetry Integration
-
-**Why**: Production-grade observability for monitoring, tracing, and debugging.
-
-**How**: Console exporter in development; easily switchable to OTLP for production.
-
-## Future Improvements
-
-### Short-term
-
-- [ ] Add JWT authentication and authorization
-- [ ] Implement rate limiting (Polly or AspNetCoreRateLimit)
-- [ ] Add request/response logging middleware
-- [ ] Implement unit caching with expiration
-- [ ] Add batch conversion endpoint
-- [ ] Implement database persistence (EF Core + PostgreSQL/SQL Server)
-- [ ] Add API versioning (URL-based or header-based)
-
-### Medium-term
-
-- [ ] Add historical conversion rates for currencies
-- [ ] Implement unit presets/favorites for users
-- [ ] Add conversion history and audit logs
-- [ ] Create mobile-friendly web UI
-- [ ] Add multi-language support (i18n)
-- [ ] Implement user accounts and preferences
-- [ ] Add conversion formula documentation
-- [ ] Create OpenAPI client SDKs (C#, TypeScript, Python)
-
-### Long-term
-
-- [ ] Machine learning for unit recommendations
-- [ ] Real-time conversion sync across distributed services
-- [ ] Multi-region deployment with Azure App Service
-- [ ] Advanced analytics dashboard
-- [ ] Plugin architecture for custom converters
-- [ ] Integration with third-party conversion APIs
-
-## Tradeoffs
-
-### Simplicity vs. Feature-richness
-
-**Tradeoff**: The API intentionally keeps unit storage simple (JSON file) rather than introducing a database.
-
-**Rationale**: Reduces dependencies, deployment complexity, and operational overhead. Suitable for small to medium deployments. For enterprise scale, swap `JsonUnitRepository` with `EFCoreUnitRepository`.
-
-### Consistency vs. Performance
-
-**Tradeoff**: Unit data is reloaded from disk on each repository instantiation; caching is in-memory per instance.
-
-**Rationale**: Ensures newly added units are visible immediately. For high-traffic scenarios, implement distributed caching (Redis).
-
-### Temperature vs. Base Unit Strategy
-
-**Tradeoff**: Temperature conversions use formulas instead of the base unit factor approach.
-
-**Rationale**: Temperature scales have non-linear relationships (Celsius 0°C ≠ 0 Fahrenheit). Using formulas is more accurate.
-
-### Testing Framework Choice
-
-**Tradeoff**: Using xUnit, FluentAssertions, and Moq instead of NUnit/MSTest.
-
-**Rationale**: xUnit is modern, extensible, and widely adopted in the .NET community. FluentAssertions provides readable test assertions.
-
-## License
-
-MIT License - see LICENSE file for details.
+The solution is designed with maintainability, extensibility, testability, and scalability in mind while keeping the implementation simple enough for the current requirements.
 
 ---
 
-**Author**: Your Name  
-**Last Updated**: June 2026  
-**Status**: Production Ready ✅
+## Features
+
+### Supported Categories
+
+#### Length
+
+* Meter
+* Kilometer
+* Centimeter
+* Millimeter
+* Inch
+* Foot
+* Yard
+* Mile
+
+#### Weight / Mass
+
+* Kilogram
+* Gram
+* Pound
+* Ounce
+
+#### Temperature
+
+* Celsius
+* Fahrenheit
+* Kelvin
+
+#### Volume
+
+* Liter
+* Milliliter
+* Gallon
+
+---
+
+## Technology Stack
+
+* ASP.NET Core 8
+* .NET 8
+* Swagger / OpenAPI
+* FluentValidation
+* OpenTelemetry
+* xUnit
+* FluentAssertions
+* Moq
+* Docker
+* GitHub Actions
+
+---
+
+# System Architecture
+
+```text
++-----------------------------------------------------+
+|                     Client                          |
++-----------------------------------------------------+
+                          |
+                          v
++-----------------------------------------------------+
+|                 UnitConversion.Api                  |
+|                                                     |
+|  Controllers                                        |
+|  Middleware                                         |
+|  Swagger                                            |
+|  OpenTelemetry                                      |
++-----------------------------------------------------+
+                          |
+                          v
++-----------------------------------------------------+
+|             UnitConversion.Application              |
+|                                                     |
+|  DTOs                                               |
+|  Validators                                         |
+|  Interfaces                                         |
+|  Services                                           |
++-----------------------------------------------------+
+             |                         |
+             |                         |
+             v                         v
++----------------------+   +--------------------------+
+| UnitConversion.Domain|   |UnitConversion.Infrastructure|
+|                      |   |                            |
+| Entities             |   | Repositories              |
+| Enums                |   | JSON Storage              |
++----------------------+   +----------------------------+
+                                        |
+                                        v
+                               +------------------+
+                               |   units.json     |
+                               +------------------+
+```
+
+---
+
+# Project Structure
+
+```text
+UnitConversionApi
+│
+├── src
+│   ├── UnitConversion.Api
+│   ├── UnitConversion.Application
+│   ├── UnitConversion.Domain
+│   └── UnitConversion.Infrastructure
+│
+├── tests
+│   └── UnitConversion.Tests
+│
+├── Dockerfile
+├── docker-compose.yml
+├── README.md
+│
+└── .github
+    └── workflows
+        └── build.yml
+```
+
+---
+
+# Request Flow
+
+```text
+Client
+   |
+   | POST /api/conversions
+   v
+ConversionController
+   |
+   v
+ConversionService
+   |
+   +----------------------+
+   |                      |
+   v                      v
+Source Unit        Target Unit
+Repository          Repository
+   |                   |
+   +--------+  +-------+
+            |  |
+            v  v
+          units.json
+               |
+               v
+      Conversion Engine
+               |
+               v
+          API Response
+```
+
+---
+
+# Conversion Strategy
+
+The application uses a Base Unit Conversion Strategy.
+
+This avoids creating conversion rules for every possible pair of units.
+
+## Example
+
+Instead of:
+
+```text
+meter -> foot
+meter -> yard
+meter -> inch
+foot -> yard
+foot -> inch
+yard -> inch
+```
+
+The system performs:
+
+```text
+Source Unit
+     |
+     v
+ Base Unit
+     |
+     v
+Target Unit
+```
+
+Example:
+
+```text
+Foot
+  |
+  v
+Meter
+  |
+  v
+Kilometer
+```
+
+Benefits:
+
+* Simpler implementation
+* Fewer conversion rules
+* Easier maintenance
+* Better scalability
+
+---
+
+# Temperature Conversion
+
+Temperature conversions require dedicated formulas.
+
+Example:
+
+```text
+Celsius
+   |
+   v
+Conversion Formula
+   |
+   v
+Fahrenheit
+```
+
+Unlike length and weight conversions, temperature cannot be represented using a multiplication factor alone.
+
+---
+
+# Dynamic Unit Storage
+
+Unit definitions are loaded from:
+
+```text
+src/UnitConversion.Infrastructure/Data/units.json
+```
+
+Example:
+
+```json
+{
+  "name": "yard",
+  "category": "Length",
+  "factorToBaseUnit": 0.9144
+}
+```
+
+Benefits:
+
+* No code changes required
+* Configuration-driven design
+* Easy maintenance
+* Future database migration path
+
+---
+
+# API Endpoints
+
+## Convert Units
+
+### Request
+
+```http
+POST /api/conversions
+```
+
+Request Body
+
+```json
+{
+  "value": 100,
+  "fromUnit": "meter",
+  "toUnit": "foot"
+}
+```
+
+Response
+
+```json
+{
+  "value": 100,
+  "fromUnit": "meter",
+  "toUnit": "foot",
+  "result": 328.084
+}
+```
+
+---
+
+## Get All Units
+
+```http
+GET /api/units
+```
+
+---
+
+## Add New Unit
+
+```http
+POST /api/units
+```
+
+Request
+
+```json
+{
+  "name": "yard",
+  "category": "Length",
+  "factorToBaseUnit": 0.9144
+}
+```
+
+---
+
+# Validation
+
+Validation is implemented using FluentValidation.
+
+Examples:
+
+* Missing unit names
+* Invalid categories
+* Empty values
+* Unsupported requests
+
+Example:
+
+```json
+{
+  "errors": {
+    "fromUnit": [
+      "FromUnit is required."
+    ]
+  }
+}
+```
+
+---
+
+# Error Handling
+
+Global exception middleware provides consistent error responses.
+
+Example:
+
+```json
+{
+  "error": "Units belong to different categories."
+}
+```
+
+---
+
+# OpenTelemetry Observability
+
+The API is instrumented using OpenTelemetry.
+
+```text
+                 +------------------+
+                 | ASP.NET Core API |
+                 +------------------+
+                           |
+          +----------------+----------------+
+          |                                 |
+          v                                 v
+     Metrics                           Traces
+          |                                 |
+          v                                 v
+    Prometheus                        Jaeger
+          |
+          v
+      Grafana
+```
+
+Currently configured:
+
+* ASP.NET Core instrumentation
+* HTTP Client instrumentation
+* Metrics collection
+* Distributed tracing
+
+---
+
+# CI/CD Pipeline
+
+```text
+Developer
+    |
+    v
+GitHub Push
+    |
+    v
+GitHub Actions
+    |
+    +---- Restore
+    |
+    +---- Build
+    |
+    +---- Test
+    |
+    +---- Docker Build
+    |
+    v
+Pipeline Success
+```
+
+Pipeline runs on:
+
+* Push
+* Pull Request
+
+---
+
+# Testing Strategy
+
+Testing is implemented using:
+
+* xUnit
+* FluentAssertions
+* Moq
+
+Coverage includes:
+
+### Conversion Service
+
+* Meter → Foot
+* Foot → Meter
+* Kilogram → Pound
+* Pound → Kilogram
+* Celsius → Fahrenheit
+* Fahrenheit → Celsius
+* Kelvin → Celsius
+
+### Validators
+
+* Valid Requests
+* Invalid Requests
+
+### Controllers
+
+* Successful Conversion
+* Validation Failure
+* Error Responses
+
+Run tests:
+
+```bash
+dotnet test
+```
+
+---
+
+# Running Locally
+
+## Prerequisites
+
+* .NET 8 SDK
+* Git
+
+Verify installation:
+
+```bash
+dotnet --version
+```
+
+---
+
+## Clone Repository
+
+```bash
+git clone https://github.com/<your-username>/UnitConversionApi.git
+
+cd UnitConversionApi
+```
+
+---
+
+## Restore Packages
+
+```bash
+dotnet restore
+```
+
+---
+
+## Build
+
+```bash
+dotnet build
+```
+
+---
+
+## Run
+
+```bash
+dotnet run --project src/UnitConversion.Api
+```
+
+---
+
+## Swagger
+
+```text
+https://localhost:5001/swagger
+```
+
+---
+
+# Docker
+
+## Build
+
+```bash
+docker build -t unit-conversion-api .
+```
+
+## Run
+
+```bash
+docker run -p 8080:8080 unit-conversion-api
+```
+
+Swagger:
+
+```text
+http://localhost:8080/swagger
+```
+
+---
+
+# Docker Compose
+
+Start:
+
+```bash
+docker compose up --build
+```
+
+Stop:
+
+```bash
+docker compose down
+```
+
+---
+
+# Scalability Considerations
+
+The current implementation uses a Base Unit Conversion Strategy because it provides the best balance between:
+
+* Simplicity
+* Performance
+* Maintainability
+
+Future evolution could include a graph-based conversion engine.
+
+Example:
+
+```text
+ Meter
+   |
+   +-------- Foot
+                |
+                +-------- Inch
+                           |
+                           +------ Centimeter
+                                       |
+                                       +------ Millimeter
+```
+
+This would allow conversion paths to be discovered dynamically.
+
+The current requirements do not justify that complexity, so the simpler and more maintainable approach was chosen.
+
+---
+
+# Future Improvements
+
+* Database-backed unit storage
+* API Versioning
+* Authentication & Authorization
+* Rate Limiting
+* Distributed Cache
+* Graph-Based Conversion Engine
+* Custom Formula Support
+* Health Checks
+* Kubernetes Deployment
+* Advanced OpenTelemetry Dashboards
+* Serilog Structured Logging
+
+---
+
+# Trade-offs
+
+## Why JSON Instead of a Database?
+
+Advantages:
+
+* Simple
+* Lightweight
+* Easy to review
+* Easy to modify
+* No external dependencies
+
+For the current scope, JSON provides the best balance between simplicity and flexibility.
+
+---
+
+## Why Base Units Instead of Graph Traversal?
+
+Graph traversal is more flexible but introduces significant complexity.
+
+Base units provide:
+
+* Faster implementation
+* Easier maintenance
+* Simpler testing
+* Clearer business logic
+
+---
+
+# Production Readiness
+
+Implemented:
+
+✓ Dependency Injection
+
+✓ Validation
+
+✓ Exception Handling
+
+✓ Automated Testing
+
+✓ OpenTelemetry
+
+✓ Docker
+
+✓ CI/CD Pipeline
+
+✓ Swagger Documentation
+
+Potential Production Enhancements:
+
+* Serilog
+* API Versioning
+* Authentication
+* Health Checks
+* Kubernetes
+* Distributed Caching
+
+---
+
+
+The architecture demonstrates:
+
+* Clean Code Principles
+* Separation of Concerns
+* Testability
+* Observability
+* Containerization
+* Scalability Considerations
+
+while remaining straightforward to understand, maintain, and extend.
