@@ -6,405 +6,58 @@ A production-quality ASP.NET Core 8 Web API for converting values between differ
 
 - [Overview](#overview)
 - [Features](#features)
-- [Architecture](#architecture)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Running Locally](#running-locally)
-  - [Running with Docker](#running-with-docker)
-- [API Documentation](#api-documentation)
-  - [Endpoints](#endpoints)
-  - [Examples](#examples)
-- [Configuration](#configuration)
-- [Testing](#testing)
-- [OpenTelemetry](#opentelemetry)
-- [Design Decisions](#design-decisions)
-- [Future Improvements](#future-improvements)
-- [Tradeoffs](#tradeoffs)
-- [License](#license)
+# Unit Conversion API
 
-## Overview
+A small, reliable ASP.NET Core Web API for converting between measurement units.
 
-The Unit Conversion API provides RESTful endpoints for converting values between various measurement units across multiple categories:
+Targets: .NET 10.
 
-- **Length**: meter, kilometer, centimeter, millimeter, inch, foot, yard, mile
-- **Weight**: kilogram, gram, pound, ounce
-- **Volume**: liter, milliliter, gallon
-- **Temperature**: celsius, fahrenheit, kelvin
+What this repo contains
+- Layered solution (API → Application → Infrastructure → Domain)
+- A JSON-based unit store (Data/units.json) with runtime unit registration
+- Validation (FluentValidation), global error handling, and unit tests
+- Docker support and a simple docker-compose to run the service
 
-The API supports dynamic unit registration, allowing new units to be added at runtime without code changes.
+Quick run (local)
 
-## Features
+1. Build and test:
 
-✅ **Complete Unit Conversion**: Convert between 18+ predefined units across 4 categories  
-✅ **Dynamic Unit Management**: Add new units via POST endpoint  
-✅ **Base Unit Strategy**: Efficient conversions using base unit factors  
-✅ **Temperature Formulas**: Dedicated logic for temperature conversions  
-✅ **Swagger/OpenAPI Documentation**: Interactive API exploration  
-✅ **Input Validation**: FluentValidation with detailed error messages  
-✅ **Global Exception Handling**: Middleware-based error responses  
-✅ **OpenTelemetry Instrumentation**: Distributed tracing and metrics  
-✅ **Comprehensive Unit Tests**: xUnit with FluentAssertions and Moq  
-✅ **Docker Support**: Multi-stage build with health checks  
-✅ **CI/CD Pipeline**: GitHub Actions for automated testing  
-
-## Architecture
-
-### Clean Architecture Lite
-
-The solution follows Clean Architecture principles with clear separation of concerns:
-
-```
-┌─────────────────────────────────────────────┐
-│           UnitConversion.Api                │
-│    (Controllers, Middleware, Extensions)    │
-└──────────────┬──────────────────────────────┘
-               │
-               ├─────────────────────────────────┐
-               │                                 │
-┌──────────────▼─────────────────┐  ┌──────────▼──────────────────┐
-│  UnitConversion.Application     │  │ UnitConversion.Infrastructure│
-│  (Services, DTOs, Validators)   │  │ (Repositories, Configuration)│
-└──────────────┬─────────────────┘  └──────────┬──────────────────┘
-               │                                 │
-               └─────────────┬───────────────────┘
-                             │
-                ┌────────────▼────────────┐
-                │ UnitConversion.Domain   │
-                │ (Entities, Enums)       │
-                └─────────────────────────┘
-```
-
-### Design Patterns
-
-- **Repository Pattern**: `JsonUnitRepository` abstracts data access
-- **Dependency Injection**: Extension methods for service registration
-- **Middleware Pattern**: Global exception handling
-- **Validation Pipeline**: FluentValidation integration
-- **Factory Pattern**: Unit initialization with sensible defaults
-
-## Tech Stack
-
-- **.NET 8** - Latest LTS framework
-- **ASP.NET Core 8** - Web framework
-- **Swagger/Swashbuckle** - API documentation
-- **FluentValidation** - Input validation
-- **OpenTelemetry** - Distributed tracing and metrics
-- **xUnit** - Unit testing framework
-- **FluentAssertions** - Fluent assertion library
-- **Moq** - Mocking framework
-- **Docker** - Containerization
-- **GitHub Actions** - CI/CD automation
-
-## Project Structure
-
-```
-UnitConversionApi/
-├── src/
-│   ├── UnitConversion.Api/
-│   │   ├── Controllers/
-│   │   │   ├── ConversionController.cs
-│   │   │   └── UnitsController.cs
-│   │   ├── Middleware/
-│   │   │   └── ExceptionMiddleware.cs
-│   │   ├── Extensions/
-│   │   │   ├── ServiceCollectionExtensions.cs
-│   │   │   └── OpenTelemetryExtensions.cs
-│   │   ├── Program.cs
-│   │   ├── appsettings.json
-│   │   ├── appsettings.Development.json
-│   │   └── UnitConversion.Api.csproj
-│   ├── UnitConversion.Application/
-│   │   ├── DTOs/
-│   │   ├── Interfaces/
-│   │   ├── Services/
-│   │   ├── Validators/
-│   │   └── UnitConversion.Application.csproj
-│   ├── UnitConversion.Domain/
-│   │   ├── Entities/
-│   │   ├── Enums/
-│   │   └── UnitConversion.Domain.csproj
-│   └── UnitConversion.Infrastructure/
-│       ├── Repositories/
-│       ├── Data/
-│       ├── Configuration/
-│       └── UnitConversion.Infrastructure.csproj
-├── tests/
-│   └── UnitConversion.Tests/
-│       ├── Services/
-│       ├── Controllers/
-│       ├── Validators/
-│       └── UnitConversion.Tests.csproj
-├── Dockerfile
-├── docker-compose.yml
-├── .dockerignore
-├── .github/workflows/build.yml
-├── README.md
-└── UnitConversion.sln
-```
-
-## Getting Started
-
-### Prerequisites
-
-- .NET 8 SDK or later
-- Docker Desktop (optional, for containerized execution)
-- Git
-
-### Running Locally
-
-#### 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/UnitConversionApi.git
-cd UnitConversionApi
+dotnet build UnitConversion.sln -c Release
+dotnet test UnitConversion.sln -c Release
 ```
 
-#### 2. Restore dependencies
+2. Run the API:
+
 ```bash
-dotnet restore UnitConversion.sln
+dotnet run --project src/UnitConversion.Api/UnitConversion.Api.csproj
 ```
 
-#### 3. Run the API
+3. Try endpoints:
+
 ```bash
-cd src/UnitConversion.Api
-dotnet run
+curl http://localhost:8080/api/units
+curl -X POST http://localhost:8080/api/conversions \
+  -H "Content-Type: application/json" \
+  -d '{"value":100,"fromUnit":"meter","toUnit":"foot"}'
 ```
 
-The API will start on `http://localhost:5000`.
+Run with Docker
 
-#### 4. Access Swagger UI
-Navigate to `http://localhost:5000` in your browser to see the interactive Swagger UI.
-
-### Running with Docker
-
-#### 1. Build the Docker image
 ```bash
 docker compose build
-```
-
-#### 2. Start the container
-```bash
 docker compose up -d
-```
-
-The API will be available at `http://localhost:8080`.
-
-#### 3. View logs
-```bash
-docker compose logs -f
-```
-
-#### 4. Stop the container
-```bash
-docker compose down
-```
-
-## API Documentation
-
-### Endpoints
-
-#### 1. Convert Units
-
-**POST** `/api/conversions`
-
-Convert a value from one unit to another.
-
-**Request:**
-```json
-{
-  "value": 100,
-  "fromUnit": "meter",
-  "toUnit": "foot"
-}
-```
-
-**Response (200 OK):**
-```json
-{
-  "value": 100,
-  "fromUnit": "meter",
-  "toUnit": "foot",
-  "result": 328.084
-}
-```
-
-**Error Response (400 Bad Request):**
-```json
-{
-  "error": "Validation failed",
-  "details": [
-    {
-      "field": "FromUnit",
-      "message": "FromUnit is required"
-    }
-  ]
-}
-```
-
-#### 2. Get All Units
-
-**GET** `/api/units`
-
-Retrieve all available unit definitions.
-
-**Response (200 OK):**
-```json
-[
-  {
-    "name": "meter",
-    "category": "Length",
-    "factorToBaseUnit": 1.0
-  },
-  {
-    "name": "foot",
-    "category": "Length",
-    "factorToBaseUnit": 0.3048
-  },
-  {
-    "name": "kilogram",
-    "category": "Weight",
-    "factorToBaseUnit": 1.0
-  }
-]
-```
-
-#### 3. Create Unit
-
-**POST** `/api/units`
-
-Add a new unit dynamically.
-
-**Request:**
-```json
-{
-  "name": "yard",
-  "category": "Length",
-  "factorToBaseUnit": 0.9144
-}
-```
-
-**Response (201 Created):**
-```json
-{
-  "name": "yard",
-  "category": "Length",
-  "factorToBaseUnit": 0.9144
-}
-```
-
-**Error Response (400 Bad Request):**
-```json
-{
-  "error": "Unit 'yard' already exists"
-}
-```
-
-### Examples
-
-#### Convert 100 meters to feet
-```bash
-curl -X POST http://localhost:8080/api/conversions \
-  -H "Content-Type: application/json" \
-  -d '{"value": 100, "fromUnit": "meter", "toUnit": "foot"}'
-```
-
-#### Convert 50 kilograms to pounds
-```bash
-curl -X POST http://localhost:8080/api/conversions \
-  -H "Content-Type: application/json" \
-  -d '{"value": 50, "fromUnit": "kilogram", "toUnit": "pound"}'
-```
-
-#### Convert 0°C to Fahrenheit
-```bash
-curl -X POST http://localhost:8080/api/conversions \
-  -H "Content-Type: application/json" \
-  -d '{"value": 0, "fromUnit": "celsius", "toUnit": "fahrenheit"}'
-```
-
-#### Get all units
-```bash
 curl http://localhost:8080/api/units
 ```
 
-#### Add new unit (yard)
-```bash
-curl -X POST http://localhost:8080/api/units \
-  -H "Content-Type: application/json" \
-  -d '{"name": "yard", "category": "Length", "factorToBaseUnit": 0.9144}'
-```
+Notes
+- The image uses .NET 10 runtime. Swagger is available for development only.
+- Production image runs on HTTP port 8080 and reads units from `/app/Data`.
 
-## Configuration
+If you prefer a short development-only docker-compose (mounting code, enabling Swagger), I can add it.
 
-### appsettings.json
+License: MIT
 
-```json
-{
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft": "Information",
-      "Microsoft.AspNetCore": "Warning"
-    }
-  },
-  "AllowedHosts": "*",
-  "Kestrel": {
-    "Endpoints": {
-      "Http": {
-        "Url": "http://*:5000"
-      },
-      "Https": {
-        "Url": "https://*:5001"
-      }
-    }
-  },
-  "UnitStorage": {
-    "FilePath": "Data/units.json"
-  }
-}
-```
-
-### Environment Variables
-
-- `ASPNETCORE_ENVIRONMENT`: Set to `Development` or `Production`
-- `ASPNETCORE_URLS`: Override the listening URL (default: `http://+:5000`)
-
-## Testing
-
-### Run all tests
-```bash
-dotnet test UnitConversion.sln
-```
-
-### Run tests with verbosity
-```bash
-dotnet test UnitConversion.sln --verbosity detailed
-```
-
-### Run specific test class
-```bash
-dotnet test UnitConversion.sln --filter "ClassName=ConversionServiceTests"
-```
-
-### Generate code coverage
-```bash
-dotnet test UnitConversion.sln --collect:"XPlat Code Coverage"
-```
-
-### Test Coverage
-
-The solution includes comprehensive test suites for:
-
-- **ConversionService** (10+ test cases)
-  - Length conversions (meter ↔ foot)
-  - Weight conversions (kilogram ↔ pound)
-  - Temperature conversions (celsius, fahrenheit, kelvin)
-  - Error handling for invalid units and categories
-
-- **ConversionController** (3+ test cases)
-  - Valid conversion requests
-  - Validation failures
   - Service exceptions
 
 - **Validators** (10+ test cases)

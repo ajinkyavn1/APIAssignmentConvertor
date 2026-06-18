@@ -9,15 +9,15 @@ COPY ["src/UnitConversion.Infrastructure/UnitConversion.Infrastructure.csproj", 
 COPY ["src/UnitConversion.Domain/UnitConversion.Domain.csproj", "src/UnitConversion.Domain/"]
 COPY ["tests/UnitConversion.Tests/UnitConversion.Tests.csproj", "tests/UnitConversion.Tests/"]
 
-# Restore NuGet packages for the solution (restore for Release configuration so Debug-only packages are not pulled)
-RUN dotnet restore "UnitConversion.sln" -p:Configuration=Release
+# Restore for Debug (include Debug-only PackageReferences such as Swashbuckle)
+RUN dotnet restore "UnitConversion.sln"
 
-# Copy the rest of the source and build
+# Copy source and build Debug
 COPY . .
-RUN dotnet build "UnitConversion.sln" -c Release -o /app/build --no-restore
+RUN dotnet build "UnitConversion.sln" -c Debug -o /app/build --no-restore
 
-# Publish the API project (don't skip build here; allow publish to produce the correct outputs)
-RUN dotnet publish "src/UnitConversion.Api/UnitConversion.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false --no-restore
+# Publish the API project in Debug so Swagger is included
+RUN dotnet publish "src/UnitConversion.Api/UnitConversion.Api.csproj" -c Debug -o /app/publish /p:UseAppHost=false --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
@@ -25,7 +25,7 @@ WORKDIR /app
 # Copy published output
 COPY --from=build /app/publish .
 
-# Listen on port 8080 by default
+# Default to HTTP 8080 inside the container for dev (matches appsettings.Development.json)
 ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
 
