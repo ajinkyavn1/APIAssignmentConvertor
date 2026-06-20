@@ -548,7 +548,37 @@ docker compose down
 ```
 
 ---
+## Docker — production vs development
 
+This section gives exact commands for running the service in two modes:
+
+- Production: optimized Release image, no Swagger, listens on port 8080 inside the container.
+- Development: Debug image (built from `Dockerfile.dev`) which includes Swagger/Swashbuckle and is convenient for interactive testing.
+
+Both approaches are provided as docker-compose examples and as plain docker commands (useful in CI or simple hosts).
+
+### Production (recommended for deployments)
+
+Build the production image (multi-stage Release):
+
+```bash
+# from repo root
+docker build -f Dockerfile -t unitconversionapi:latest .
+```
+
+Run the production image (bind host port 8080 to container 8080, persist units data):
+
+```bash
+docker run -d \
+  --name unitconversionapi \
+  -e ASPNETCORE_ENVIRONMENT=Production \
+  -e ASPNETCORE_URLS=http://+:8080 \
+  -p 8080:8080 \
+  -v "$PWD/src/UnitConversion.Infrastructure/Data:/app/Data" \
+  unitconversionapi:latest
+```
+
+Or use docker-compose (already included):
 # Scalability Considerations
 
 The current implementation uses a Base Unit Conversion Strategy because it provides the best balance between:
