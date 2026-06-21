@@ -579,7 +579,6 @@ docker run -d \
 ```
 
 Or use docker-compose (already included):
-# Scalability Considerations
 
 Run the Development image (bind host port 8080 to container 8080, persist units data):
 
@@ -595,6 +594,7 @@ docker run -d \
   -v "$PWD/src/UnitConversion.Infrastructure/Data:/app/Data" \
   unitconversionapi:latest
 ```
+# Scalability Considerations
 The current implementation uses a Base Unit Conversion Strategy because it provides the best balance between:
 
 * Simplicity
