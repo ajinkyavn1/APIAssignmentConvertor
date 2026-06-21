@@ -472,9 +472,9 @@ dotnet --version
 ## Clone Repository
 
 ```bash
-git clone https://github.com/<your-username>/UnitConversionApi.git
+git clone https://github.com/ajinkyavn1/APIAssignmentConvertor.git
 
-cd UnitConversionApi
+cd APIAssignmentConvertor
 ```
 
 ---
