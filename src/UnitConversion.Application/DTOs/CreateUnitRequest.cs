@@ -6,7 +6,7 @@ public class CreateUnitRequest
 {
     public string Name { get; set; } = string.Empty;
 
-    public ConversionCategory Category { get; set; }
+    public ConversionCategory ConversionCategory { get; set; }
 
     public double FactorToBaseUnit { get; set; }
 }

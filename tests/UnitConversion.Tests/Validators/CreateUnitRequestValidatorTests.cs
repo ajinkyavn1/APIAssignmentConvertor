@@ -21,7 +21,7 @@ public class CreateUnitRequestValidatorTests
         var request = new CreateUnitRequest
         {
             Name = "yard",
-            Category = ConversionCategory.Length,
+            ConversionCategory = ConversionCategory.Length,
             FactorToBaseUnit = 0.9144
         };
 
@@ -39,7 +39,7 @@ public class CreateUnitRequestValidatorTests
         var request = new CreateUnitRequest
         {
             Name = "",
-            Category = ConversionCategory.Length,
+            ConversionCategory = ConversionCategory.Length,
             FactorToBaseUnit = 0.9144
         };
 
@@ -58,7 +58,7 @@ public class CreateUnitRequestValidatorTests
         var request = new CreateUnitRequest
         {
             Name = "yard",
-            Category = ConversionCategory.Length,
+            ConversionCategory = ConversionCategory.Length,
             FactorToBaseUnit = 0
         };
 
@@ -77,7 +77,7 @@ public class CreateUnitRequestValidatorTests
         var request = new CreateUnitRequest
         {
             Name = "yard",
-            Category = ConversionCategory.Length,
+            ConversionCategory = ConversionCategory.Length,
             FactorToBaseUnit = -0.9144
         };
 

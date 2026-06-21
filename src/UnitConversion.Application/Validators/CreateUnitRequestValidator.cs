@@ -13,7 +13,7 @@ public class CreateUnitRequestValidator : AbstractValidator<CreateUnitRequest>
             .NotNull()
             .WithMessage("Name cannot be null");
 
-        RuleFor(x => x.Category)
+        RuleFor(x => x.ConversionCategory)
             .IsInEnum()
             .WithMessage("Category must be a valid ConversionCategory");
 

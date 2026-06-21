@@ -61,11 +61,11 @@ public class UnitsController : ControllerBase
 
         try
         {
-            _repository.AddUnit(request.Name, request.Category, request.FactorToBaseUnit);
+            _repository.AddUnit(request.Name, request.ConversionCategory, request.FactorToBaseUnit);
             var response = new UnitResponse
             {
                 Name = request.Name,
-                Category = request.Category.ToString(),
+                Category = request.ConversionCategory.ToString(),
                 FactorToBaseUnit = request.FactorToBaseUnit
             };
 

@@ -1,93 +1,97 @@
 [
   {
     "Name": "meter",
-    "Category": "Length",
-    "FactorToBaseUnit": 1.0
+    "Category": 0,
+    "FactorToBaseUnit": 1
   },
   {
     "Name": "kilometer",
-    "Category": "Length",
-    "FactorToBaseUnit": 1000.0
+    "Category": 0,
+    "FactorToBaseUnit": 1000
   },
   {
     "Name": "centimeter",
-    "Category": "Length",
+    "Category": 0,
     "FactorToBaseUnit": 0.01
   },
   {
     "Name": "millimeter",
-    "Category": "Length",
+    "Category": 0,
     "FactorToBaseUnit": 0.001
   },
   {
     "Name": "inch",
-    "Category": "Length",
+    "Category": 0,
     "FactorToBaseUnit": 0.0254
   },
   {
     "Name": "foot",
-    "Category": "Length",
+    "Category": 0,
     "FactorToBaseUnit": 0.3048
   },
   {
     "Name": "yard",
-    "Category": "Length",
+    "Category": 0,
     "FactorToBaseUnit": 0.9144
   },
   {
     "Name": "mile",
-    "Category": "Length",
+    "Category": 0,
     "FactorToBaseUnit": 1609.34
   },
   {
     "Name": "kilogram",
-    "Category": "Weight",
-    "FactorToBaseUnit": 1.0
+    "Category": 1,
+    "FactorToBaseUnit": 1
   },
   {
     "Name": "gram",
-    "Category": "Weight",
+    "Category": 1,
     "FactorToBaseUnit": 0.001
   },
   {
     "Name": "pound",
-    "Category": "Weight",
+    "Category": 1,
     "FactorToBaseUnit": 0.453592
   },
   {
     "Name": "ounce",
-    "Category": "Weight",
+    "Category": 1,
     "FactorToBaseUnit": 0.0283495
   },
   {
     "Name": "liter",
-    "Category": "Volume",
-    "FactorToBaseUnit": 1.0
+    "Category": 3,
+    "FactorToBaseUnit": 1
   },
   {
     "Name": "milliliter",
-    "Category": "Volume",
+    "Category": 3,
     "FactorToBaseUnit": 0.001
   },
   {
     "Name": "gallon",
-    "Category": "Volume",
+    "Category": 3,
     "FactorToBaseUnit": 3.78541
   },
   {
     "Name": "celsius",
-    "Category": "Temperature",
-    "FactorToBaseUnit": 1.0
+    "Category": 2,
+    "FactorToBaseUnit": 1
   },
   {
     "Name": "fahrenheit",
-    "Category": "Temperature",
-    "FactorToBaseUnit": 1.0
+    "Category": 2,
+    "FactorToBaseUnit": 1
   },
   {
     "Name": "kelvin",
-    "Category": "Temperature",
-    "FactorToBaseUnit": 1.0
+    "Category": 2,
+    "FactorToBaseUnit": 1
+  },
+  {
+    "Name": "kk",
+    "Category": 0,
+    "FactorToBaseUnit": 3240
   }
 ]
-
