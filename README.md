@@ -581,6 +581,20 @@ docker run -d \
 Or use docker-compose (already included):
 # Scalability Considerations
 
+Run the Development image (bind host port 8080 to container 8080, persist units data):
+
+```bash
+docker build -f Dockerfile.dev -t unitconversionapi:latest .
+```
+```bash
+docker run -d \
+  --name unitconversionapi \
+  -e ASPNETCORE_ENVIRONMENT=Development \
+  -e ASPNETCORE_URLS=http://+:8080 \
+  -p 8080:8080 \
+  -v "$PWD/src/UnitConversion.Infrastructure/Data:/app/Data" \
+  unitconversionapi:latest
+```
 The current implementation uses a Base Unit Conversion Strategy because it provides the best balance between:
 
 * Simplicity
