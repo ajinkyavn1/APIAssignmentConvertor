@@ -93,5 +93,10 @@
     "Name": "kk",
     "Category": 0,
     "FactorToBaseUnit": 3240
+  },
+  {
+    "Name": "LL",
+    "Category": 0,
+    "FactorToBaseUnit": 1500
   }
 ]

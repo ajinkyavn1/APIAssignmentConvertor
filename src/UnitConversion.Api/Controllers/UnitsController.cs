@@ -47,7 +47,7 @@ public class UnitsController : ControllerBase
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<UnitResponse>> CreateUnit(CreateUnitRequest request)
+    public async Task<ActionResult<UnitResponse>> CreateUnit([FromBody] CreateUnitRequest request)
     {
         var validationResult = await _validator.ValidateAsync(request);
         if (!validationResult.IsValid)
